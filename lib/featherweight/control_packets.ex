@@ -39,7 +39,7 @@ defmodule Featherweight.ControlPackets do
                 length_prefixed_bytes(username) <>
                 length_prefixed_bytes(password)
       remaining = variable_header <> keepalive_header <> payload
-      remaining_length_header = << :erlang.byte_size(remaining) :: size(16) >>
+      remaining_length_header = << :erlang.byte_size(remaining) :: size(8) >>
       fixed_header <> remaining_length_header <> remaining
     end
   end
