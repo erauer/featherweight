@@ -4,14 +4,14 @@ defprotocol Featherweight.Encode do
 end
 
 defmodule Featherweight.Encoder do
+  @moduledoc false
 
   def flag_bit(bool) when is_boolean(bool) do
-    if(bool, do: 1, else: 0)
+    if bool, do: 1, else: 0
   end
 
   def flag_bit(str)  do
-      !is_empty?(str)
-      |> flag_bit
+      flag_bit(!is_empty?(str))
   end
 
   def is_empty?(str) when is_nil(str) do
@@ -26,8 +26,8 @@ defmodule Featherweight.Encoder do
 
   def length_prefixed_bytes(str) do
     case is_empty?(str) do
-      true -> <<0::size(16)>>
-      false -> <<String.length(str)::size(16)>> <> str
+      true -> <<>>
+      false -> <<String.length(str)::16>> <> str
     end
   end
 

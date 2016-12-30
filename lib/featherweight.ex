@@ -1,13 +1,17 @@
 defmodule Featherweight do
+  @moduledoc """
+
+  This module contains the main MQTT client implementation
+  """
 
   require IEx
 
   use Connection
 
   alias Featherweight.Socket
-  alias Featherweight.Protocol
+  alias Featherweight.Decode
+  alias Featherweight.Protocol.Connect
   alias Featherweight.Encode
-  alias Featherweight.ControlPackets.Connect
 
   @default_port 1883
   @default_host "127.0.0.1"
@@ -33,12 +37,12 @@ defmodule Featherweight do
 
   @spec start_link(options) :: start_link
   def start_link(options \\ %{}) do
-    args = %{ port: Map.get(options, :port, @default_port),
-              host: Map.get(options, :host, @default_host),
-              username: Map.get(options, :username, @default_username),
-              password: Map.get(options, :password,  @default_password),
-              timeout: Map.get(options, :timeout,  @default_timeout),
-              socket: nil}
+    args = %{port: Map.get(options, :port, @default_port),
+            host: Map.get(options, :host, @default_host),
+            username: Map.get(options, :username, @default_username),
+            password: Map.get(options, :password,  @default_password),
+            timeout: Map.get(options, :timeout,  @default_timeout),
+            socket: nil}
     Connection.start_link(__MODULE__, args)
   end
 
@@ -64,7 +68,7 @@ defmodule Featherweight do
 
   def handle_info({:tcp, _socket, data}, state) do
     IO.puts("Data Received")
-    IO.puts(inspect(Protocol.parse(data)))
+    IO.puts(inspect(Decode.decode(data)))
     {:noreply, state}
   end
 

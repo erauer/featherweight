@@ -27,6 +27,9 @@ defmodule Featherweight.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:connection, "~> 1.0"}]
+    [
+      {:connection, "~> 1.0"},
+      {:credo, "~> 0.5", only: [:dev, :test]}
+    ]
   end
 end

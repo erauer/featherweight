@@ -1,4 +1,5 @@
 defmodule Featherweight.Socket do
+  @moduledoc false
 
   def connect(%{ssl: false, host: host, port: port, timeout: timeout}) do
     tcp_opts = [:binary, active: true]
