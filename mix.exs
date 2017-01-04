@@ -1,4 +1,7 @@
 defmodule Featherweight.Mixfile do
+
+  @moduledoc false
+
   use Mix.Project
 
   def project do
@@ -28,8 +31,8 @@ defmodule Featherweight.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:connection, "~> 1.0"},
-      {:credo, "~> 0.5", only: [:dev, :test]}
+      {:credo, "~> 0.5", only: [:dev, :test], runtime: false},
+      {:dialyze, "~> 0.2.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
