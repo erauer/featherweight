@@ -11,39 +11,39 @@ defmodule Featherweight.Decode do
     Protocol.ConnAck.decode(bytes)
   end
 
-  def decode(<< << 3::4,  _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< << 3::4,  _flags::4 >>, _rest::binary>>) do
     IO.puts("Received PUBLISH")
   end
 
-  def decode(<< <<4::4,  _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<4::4,  _flags::4 >>, _rest::binary>>) do
     IO.puts("Received PUBACK")
   end
 
-  def decode(<< <<5::4,  _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<5::4,  _flags::4 >>, _rest::binary>>) do
     IO.puts("Received PUBREC")
   end
 
-  def decode(<< <<6::4,  _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<6::4,  _flags::4 >>, _rest::binary>>) do
     IO.puts("Received PUBREL")
   end
 
-  def decode(<< <<7::4, _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<7::4, _flags::4 >>, _rest::binary>>) do
     IO.puts("Received PUBCOMP")
   end
 
-  def decode(<< <<8::4, _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<8::4, _flags::4 >>, _rest::binary>>) do
     IO.puts("Received SUBSCRIBE")
   end
 
-  def decode(<< <<9::4, _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<9::4, _flags::4 >>, _rest::binary>>) do
     IO.puts("Received SUBACK")
   end
 
-  def decode(<< <<10::4, _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<10::4, _flags::4 >>, _rest::binary>>) do
     IO.puts("Received UNSUBSCRIBE")
   end
 
-  def decode(<< <<11::4, _flags::4 >>, _rest::binary>> = bytes) do
+  def decode(<< <<11::4, _flags::4 >>, _rest::binary>>) do
     IO.puts("Received UNSUBACK")
   end
 
@@ -63,7 +63,7 @@ defmodule Featherweight.Decode do
     elements
   end
 
-  def length_prefixed_strings(<<length::size(16),remaining::binary>> = payload, elements) do
+  def length_prefixed_strings(<<length::size(16),remaining::binary>>, elements) do
     if length > 0 do
       <<str::binary-size(length),next::binary>> = remaining
       elements = elements ++ [str]
