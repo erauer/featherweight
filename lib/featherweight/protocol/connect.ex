@@ -3,10 +3,20 @@ alias Featherweight.Encode
 defmodule Featherweight.Protocol.Connect do
   @moduledoc false
 
-  require IEx
-
   alias Featherweight.Decode
 
+  @type username :: String.t | nil
+  @type password :: String.t | nil
+  @type client_identifier :: String.t
+  @type will_topic :: String.t | nil
+  @type will_message :: String.t | nil
+
+  @type t ::%__MODULE__{client_identifier: client_identifier,
+                        username: username,
+                        password: password,
+                        will_topic: will_topic,
+                        will_message: will_message
+  }
   @enforce_keys [:client_identifier, :keep_alive]
   defstruct [:client_identifier,
             :username, :password,

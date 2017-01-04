@@ -10,4 +10,8 @@ defmodule Featherweight.Socket do
      :gen_tcp.send(socket,packet)
    end
 
+   def socket(socket) do
+     :gen_tcp.close(socket)
+   end
+
 end
