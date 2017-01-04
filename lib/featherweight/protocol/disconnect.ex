@@ -3,7 +3,7 @@ alias Featherweight.Encode
 defmodule Featherweight.Protocol.Disconnect do
   @moduledoc false
 
-  @type reason :: :ping_timeout | :server_disconnect
+  @type reason :: :ping_timeout | :server_disconnect | :user_disconnect
   @type t ::%__MODULE__{reason: reason}
   defstruct [:reason]
 

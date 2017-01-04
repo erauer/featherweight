@@ -83,7 +83,28 @@ defmodule Featherweight do
     end
   end
 
-  # GenStateMachine callbacks
+  def disconnect(client) do
+    :gen_fsm.send_event(client,%Disconnect{reason: :user_disconnect})
+  end
+
+  # gen_fsm callbacks
+
+  def connected(%Disconnect{reason: _reason}, %{socket: socket} = state_data) do
+      Socket.send(socket,Encode.encode(%Disconnect{}))
+      {:next_state, :disconnecting, state_data}
+  end
+
+  def connected(%PingResp{}, state_data) do
+    IO.puts("Received ping response")
+    {:next_state,  :connected, Map.merge(state_data,
+      %{unanswered_ping_count: 0})}
+  end
+
+  def connecting(%ConnAck{}, %{timeout: timeout} = state_data) do
+    keep_alive = Kernel.round(timeout/3)
+    :timer.send_interval(keep_alive,self(),:keep_alive)
+    {:next_state, :connected, Map.merge(state_data, %{keep_alive: keep_alive, ping_count: 0})}
+  end
 
   def handle_info({:tcp_closed, _socket}, _state, state_data) do
     IO.puts("TCP Closed")
@@ -95,10 +116,12 @@ defmodule Featherweight do
     handle_info(Decode.decode(data), state_name, state_data)
   end
 
-  def handle_info(%ConnAck{}, :connecting, %{timeout: timeout} = state_data) do
-    keep_alive = Kernel.round(timeout/3)
-    :timer.send_interval(keep_alive,self(),:keep_alive)
-    {:next_state, :connected, Map.merge(state_data, %{keep_alive: keep_alive, ping_count: 0})}
+  def handle_info(%{} = message, :connected, state_data) do
+    connected(message,state_data)
+  end
+
+  def handle_info(%{} = message, :connecting, state_data) do
+    connecting(message,state_data)
   end
 
   def handle_info(:keep_alive, :connected, %{socket: socket} = state_data) do
@@ -112,13 +135,7 @@ defmodule Featherweight do
     end
   end
 
-  def handle_info(%PingResp{}, :connected, state_data) do
-    IO.puts("Received ping response")
-    {:next_state,  :connected, Map.merge(state_data,
-      %{unanswered_ping_count: 0})}
-  end
-
-  def terminate(reason, state, state_data) do
+  def terminate(_reason, _state, _state_data) do
     :normal
   end
 
