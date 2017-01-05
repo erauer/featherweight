@@ -15,19 +15,16 @@ defmodule Featherweight do
   alias Featherweight.Protocol.Disconnect
   alias Featherweight.Encode
 
-  @default_port 1883
-  @default_host "127.0.0.1"
+  @default_uri "mqtt://127.0.0.1"
   @default_username nil
   @default_password nil
 
   @default_timeout 5000
 
-  @type mqtt_port :: number
-  @type host :: String.t
+  @type uri :: String.t | nil
 
   @type options :: [
-    port: mqtt_port,
-    host: host,
+    uri: uri,
     username: Connect.username,
     password: Connect.password,
     timeout: timeout,
@@ -35,7 +32,7 @@ defmodule Featherweight do
     name: String.t
   ]
 
-  @default_args [port: @default_port, host: @default_host,
+  @default_args [uri: @default_uri,
             username: @default_username, password: @default_password,
             timeout: @default_timeout]
 
@@ -52,6 +49,13 @@ defmodule Featherweight do
     :binary.list_to_bin(list)
   end
 
+  defp parse(uri) do
+    URI.default_port("mqtt",1883)
+    URI.default_port("mqtts",8883)
+    %{host: host, port: port, scheme: scheme} = URI.parse(uri)
+    %{host: host, port: port, scheme: String.to_existing_atom(scheme)}
+  end
+
 
   @spec start_link(options() | keyword()) :: GenServer.on_start
   def start_link(options \\ []) do
@@ -63,12 +67,16 @@ defmodule Featherweight do
 
     args = Enum.into(options, %{socket: nil})
 
+    #Parse URI
+    %{uri: uri} = args
+    args = Map.merge(args,parse(uri))
+
     :gen_fsm.start_link(__MODULE__, args, [])
   end
 
   def init(args) do
     IO.puts(inspect(args))
-    case Socket.connect(Map.merge(args,%{ssl: false})) do
+    case Socket.connect(args) do
       {:ok, socket} ->
         conn =  Map.merge(%Connect{
                     keep_alive: Map.get(args,:timeout),
