@@ -4,8 +4,6 @@ defmodule Featherweight do
   This module contains the main MQTT client implementation
   """
 
-  require IEx
-
   alias Featherweight.Socket
   alias Featherweight.Decode
   alias Featherweight.Protocol.Connect
@@ -13,6 +11,8 @@ defmodule Featherweight do
   alias Featherweight.Protocol.PingReq
   alias Featherweight.Protocol.PingResp
   alias Featherweight.Protocol.Disconnect
+  alias Featherweight.Protocol.Subscribe
+  alias Featherweight.Protocol.SubAck
   alias Featherweight.Encode
 
   @default_uri "mqtt://127.0.0.1"
@@ -53,7 +53,7 @@ defmodule Featherweight do
     URI.default_port("mqtt",1883)
     URI.default_port("mqtts",8883)
     %{host: host, port: port, scheme: scheme} = URI.parse(uri)
-    %{host: host, port: port, scheme: String.to_existing_atom(scheme)}
+    %{host: host, port: port, scheme: String.to_atom(scheme)}
   end
 
 
@@ -91,6 +91,12 @@ defmodule Featherweight do
     end
   end
 
+
+  def subscribe(client,topics) do
+    packet_identifier = :crypto.strong_rand_bytes(2)
+    :gen_fsm.send_event(client,%Subscribe{packet_identifier: packet_identifier, topics: topics})
+  end
+
   def disconnect(client) do
     :gen_fsm.send_event(client,%Disconnect{reason: :user_disconnect})
   end
@@ -103,9 +109,20 @@ defmodule Featherweight do
   end
 
   def connected(%PingResp{}, state_data) do
-    IO.puts("Received ping response")
+    IO.puts("Ping Response")
     {:next_state,  :connected, Map.merge(state_data,
       %{unanswered_ping_count: 0})}
+  end
+
+  def connected(%Subscribe{} = message, %{socket: socket} = state_data) do
+     IO.puts("Subscribing")
+     Socket.send(socket,Encode.encode(message))
+      {:next_state, :connected, state_data}
+  end
+
+  def connected(%SubAck{} = message, %{socket: socket} = state_data) do
+      IO.puts(inspect(message))
+      {:next_state, :connected, state_data}
   end
 
   def connecting(%ConnAck{}, %{timeout: timeout} = state_data) do

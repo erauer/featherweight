@@ -45,7 +45,7 @@ defmodule Featherweight.Protocol.Connect do
       1 ->
         Map.merge(conn,%{will_qos: will_qos, will_retain: will_retain})
       _ ->
-      conn
+        conn
     end
     {conn, payload_strings} = parse_flag(conn, will_flag, :will_topic, payload_strings)
     {conn, payload_strings} = parse_flag(conn, will_flag, :will_message, payload_strings)

@@ -35,8 +35,8 @@ defmodule Featherweight.Decode do
     IO.puts("Received SUBSCRIBE")
   end
 
-  def decode(<< <<9::4, _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received SUBACK")
+  def decode(<< <<9::4, _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.SubAck.decode(bytes)
   end
 
   def decode(<< <<10::4, _flags::4 >>, _rest::binary>>) do
