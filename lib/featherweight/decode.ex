@@ -11,12 +11,12 @@ defmodule Featherweight.Decode do
     Protocol.ConnAck.decode(bytes)
   end
 
-  def decode(<< << 3::4,  _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received PUBLISH")
+  def decode(<< << 3::4,  _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.Publish.decode(bytes)
   end
 
-  def decode(<< <<4::4,  _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received PUBACK")
+  def decode(<< <<4::4,  _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.PubAck.decode(bytes)
   end
 
   def decode(<< <<5::4,  _flags::4 >>, _rest::binary>>) do

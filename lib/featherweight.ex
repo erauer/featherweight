@@ -8,9 +8,11 @@ defmodule Featherweight do
   alias Featherweight.Decode
   alias Featherweight.Protocol.Connect
   alias Featherweight.Protocol.ConnAck
-  alias Featherweight.Protocol.PingReq
   alias Featherweight.Protocol.PingResp
   alias Featherweight.Protocol.Disconnect
+  alias Featherweight.Protocol.PingReq
+  alias Featherweight.Protocol.Publish
+  alias Featherweight.Protocol.PubAck
   alias Featherweight.Protocol.Subscribe
   alias Featherweight.Protocol.SubAck
   alias Featherweight.Encode
@@ -103,15 +105,28 @@ defmodule Featherweight do
 
   # gen_fsm callbacks
 
+  def connecting(%ConnAck{}, %{timeout: timeout} = state_data) do
+    keep_alive = Kernel.round(timeout/3)
+    :timer.send_interval(keep_alive,self(),:keep_alive)
+    {:next_state, :connected, Map.merge(state_data, %{keep_alive: keep_alive, ping_count: 0})}
+  end
+
   def connected(%Disconnect{reason: _reason}, %{socket: socket} = state_data) do
       Socket.send(socket,Encode.encode(%Disconnect{}))
       {:next_state, :disconnecting, state_data}
   end
 
   def connected(%PingResp{}, state_data) do
-    IO.puts("Ping Response")
     {:next_state,  :connected, Map.merge(state_data,
       %{unanswered_ping_count: 0})}
+  end
+
+  def connected(%Publish{qos: qos, packet_identifier: packet_identifier} = message, %{socket: socket} = state_data) do
+   if qos == 1 do
+      Socket.send(socket,Encode.encode(%PubAck{packet_identifier: packet_identifier}))
+    end
+    IO.puts(inspect(message))
+    {:next_state, :connected, state_data}
   end
 
   def connected(%Subscribe{} = message, %{socket: socket} = state_data) do
@@ -125,19 +140,12 @@ defmodule Featherweight do
       {:next_state, :connected, state_data}
   end
 
-  def connecting(%ConnAck{}, %{timeout: timeout} = state_data) do
-    keep_alive = Kernel.round(timeout/3)
-    :timer.send_interval(keep_alive,self(),:keep_alive)
-    {:next_state, :connected, Map.merge(state_data, %{keep_alive: keep_alive, ping_count: 0})}
-  end
-
   def handle_info({:tcp_closed, _socket}, _state, state_data) do
     IO.puts("TCP Closed")
     {:stop, :server_disconnect, Map.merge(state_data,%{socket: nil})}
   end
 
   def handle_info({:tcp, _socket, data}, state_name, state_data) do
-    IO.puts("Data Received")
     handle_info(Decode.decode(data), state_name, state_data)
   end
 
