@@ -43,8 +43,8 @@ defmodule Featherweight.Decode do
     IO.puts("Received UNSUBSCRIBE")
   end
 
-  def decode(<< <<11::4, _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received UNSUBACK")
+  def decode(<< <<11::4, _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.UnsubAck.decode(bytes)
   end
 
   def decode(<< << 12::4, _flags::4 >>, _rest::binary>> = bytes) do

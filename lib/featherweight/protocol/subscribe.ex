@@ -13,7 +13,6 @@ end
 
 defimpl Encode, for: Featherweight.Protocol.Subscribe do
 
-  import Featherweight.Encoder
   alias Featherweight.Protocol.Subscribe
 
   def encode(%Subscribe{packet_identifier: packet_identifier, topics: topics}) do

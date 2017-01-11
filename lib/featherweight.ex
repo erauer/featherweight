@@ -15,6 +15,8 @@ defmodule Featherweight do
   alias Featherweight.Protocol.PubAck
   alias Featherweight.Protocol.Subscribe
   alias Featherweight.Protocol.SubAck
+  alias Featherweight.Protocol.Unsubscribe
+  alias Featherweight.Protocol.UnsubAck
   alias Featherweight.Encode
 
   @default_uri "mqtt://127.0.0.1"
@@ -93,14 +95,18 @@ defmodule Featherweight do
     end
   end
 
+  def disconnect(client) do
+    :gen_fsm.send_event(client,%Disconnect{reason: :user_disconnect})
+  end
 
   def subscribe(client,topics) do
     packet_identifier = :crypto.strong_rand_bytes(2)
     :gen_fsm.send_event(client,%Subscribe{packet_identifier: packet_identifier, topics: topics})
   end
 
-  def disconnect(client) do
-    :gen_fsm.send_event(client,%Disconnect{reason: :user_disconnect})
+  def unsubscribe(client,topics) do
+    packet_identifier = :crypto.strong_rand_bytes(2)
+    :gen_fsm.send_event(client,%Unsubscribe{packet_identifier: packet_identifier, topics: topics})
   end
 
   # gen_fsm callbacks
@@ -135,7 +141,18 @@ defmodule Featherweight do
       {:next_state, :connected, state_data}
   end
 
-  def connected(%SubAck{} = message, %{socket: socket} = state_data) do
+  def connected(%Unsubscribe{} = message, %{socket: socket} = state_data) do
+     IO.puts("Unsubscribing")
+     Socket.send(socket,Encode.encode(message))
+      {:next_state, :connected, state_data}
+  end
+
+  def connected(%SubAck{} = message, state_data) do
+      IO.puts(inspect(message))
+      {:next_state, :connected, state_data}
+  end
+
+  def connected(%UnsubAck{} = message, state_data) do
       IO.puts(inspect(message))
       {:next_state, :connected, state_data}
   end

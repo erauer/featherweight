@@ -1,5 +1,3 @@
-alias Featherweight.Encode
-
 defmodule Featherweight.Protocol.Publish do
   @moduledoc false
 

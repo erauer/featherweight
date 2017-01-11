@@ -6,11 +6,15 @@ defmodule Featherweight.Protocol.PubAck do
   @enforce_keys [:packet_identifier]
   defstruct [:packet_identifier]
 
+  def decode(<< <<4::4,_reserved::4>>,  _remaining_length::size(8),
+            packet_identifier::size(16)>>) do
+      %__MODULE__{packet_identifier: packet_identifier}
+  end
+
 end
 
 defimpl Encode, for: Featherweight.Protocol.PubAck do
 
-  import Featherweight.Encoder
   alias Featherweight.Protocol.PubAck
 
   def encode(%PubAck{packet_identifier: packet_identifier}) do

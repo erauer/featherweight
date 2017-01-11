@@ -14,7 +14,7 @@ defmodule Featherweight.Protocol.SubAck do
     <<error::1,_::5,qos::2>> = result
     status = case {error,qos} do
       {0,qos} -> {:ok,qos}
-      {1,qos} -> {:error}
+      {1,_} -> {:error}
     end
     [status | decode_results(results,remaining)]
   end
