@@ -1,7 +1,7 @@
 defmodule Featherweight.Socket do
   @moduledoc false
 
-  def connect(%{ssl: false, host: host, port: port, timeout: timeout}) do
+  def connect(%{scheme: :mqtt, host: host, port: port, timeout: timeout}) do
     tcp_opts = [:binary, active: true]
     :gen_tcp.connect(String.to_char_list(host), port, tcp_opts, timeout)
   end

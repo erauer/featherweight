@@ -11,12 +11,12 @@ defmodule Featherweight.Decode do
     Protocol.ConnAck.decode(bytes)
   end
 
-  def decode(<< << 3::4,  _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received PUBLISH")
+  def decode(<< << 3::4,  _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.Publish.decode(bytes)
   end
 
-  def decode(<< <<4::4,  _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received PUBACK")
+  def decode(<< <<4::4,  _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.PubAck.decode(bytes)
   end
 
   def decode(<< <<5::4,  _flags::4 >>, _rest::binary>>) do
@@ -35,16 +35,16 @@ defmodule Featherweight.Decode do
     IO.puts("Received SUBSCRIBE")
   end
 
-  def decode(<< <<9::4, _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received SUBACK")
+  def decode(<< <<9::4, _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.SubAck.decode(bytes)
   end
 
   def decode(<< <<10::4, _flags::4 >>, _rest::binary>>) do
     IO.puts("Received UNSUBSCRIBE")
   end
 
-  def decode(<< <<11::4, _flags::4 >>, _rest::binary>>) do
-    IO.puts("Received UNSUBACK")
+  def decode(<< <<11::4, _flags::4 >>, _rest::binary>> = bytes) do
+    Protocol.UnsubAck.decode(bytes)
   end
 
   def decode(<< << 12::4, _flags::4 >>, _rest::binary>> = bytes) do
