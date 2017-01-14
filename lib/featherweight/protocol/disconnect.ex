@@ -11,7 +11,6 @@ defmodule Featherweight.Protocol.Disconnect do
       %__MODULE__{}
   end
 
-
 end
 
 defimpl Encode, for: Featherweight.Protocol.Disconnect do

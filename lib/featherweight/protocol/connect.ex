@@ -80,12 +80,6 @@ defimpl Encode, for: Featherweight.Protocol.Connect do
                       clean_session: clean_session,
                       keep_alive: keep_alive,
                       client_identifier: client_identifier}) do
-    will_qos = case (will_qos) do
-      nil ->
-        0
-       i ->
-        i
-    end
 
     fixed_header = << 1::4, 0::4 >>
     variable_header = <<0::8>>  <>
@@ -93,7 +87,7 @@ defimpl Encode, for: Featherweight.Protocol.Connect do
                       "MQTT" <>
                       <<4::8>>  <>
                       <<flag_bit(username)::1,flag_bit(password)::1,
-                      flag_bit(will_retain)::1,will_qos::2,
+                      flag_bit(will_retain)::1,qos(will_qos)::2,
                       flag_bit(will_message)::1,
                       flag_bit(clean_session)::1, 0::1  >>
     keepalive_header = <<keep_alive::16>>

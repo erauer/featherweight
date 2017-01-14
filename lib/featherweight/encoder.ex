@@ -31,4 +31,7 @@ defmodule Featherweight.Encoder do
     end
   end
 
+  def qos(nil) do 0 end
+  def qos(i) when is_number(i) do i end
+
 end

@@ -3,7 +3,7 @@ defmodule Featherweight.Decode do
 
  alias Featherweight.Protocol
 
-  def decode(<< <<1::4,0::4>>, _rest::binary>> = bytes) do
+  def decode(<< <<1::4,0::4>>, _rest::binary>> = bytes) do 
     Protocol.Connect.decode(bytes)
   end
 
