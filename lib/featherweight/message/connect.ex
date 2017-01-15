@@ -1,6 +1,6 @@
 alias Featherweight.Encode
 
-defmodule Featherweight.Protocol.Connect do
+defmodule Featherweight.Message.Connect do
   @moduledoc false
 
   alias Featherweight.Decode
@@ -67,10 +67,10 @@ defmodule Featherweight.Protocol.Connect do
 
 end
 
-defimpl Encode, for: Featherweight.Protocol.Connect do
+defimpl Encode, for: Featherweight.Message.Connect do
 
   import Featherweight.Encoder
-  alias Featherweight.Protocol.Connect
+  alias Featherweight.Message.Connect
 
   def encode(%Connect{username: username, password: password,
                       will_retain: will_retain,

@@ -1,10 +1,10 @@
-defmodule Featherweight.Protocol.ConnectTest do
+defmodule Featherweight.Message.ConnectTest do
 
   @moduledoc false
 
   use ExUnit.Case
 
-  alias Featherweight.Protocol.Connect
+  alias Featherweight.Message.Connect
   alias Featherweight.Encode
   alias Featherweight.Decode
 

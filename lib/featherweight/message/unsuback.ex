@@ -1,4 +1,4 @@
-defmodule Featherweight.Protocol.UnsubAck do
+defmodule Featherweight.Message.UnsubAck do
   @moduledoc false
 
   defstruct [:packet_identifier]

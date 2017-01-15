@@ -1,6 +1,6 @@
 alias Featherweight.Encode
 
-defmodule Featherweight.Protocol.ConnAck do
+defmodule Featherweight.Message.ConnAck do
   @moduledoc false
 
   defstruct [:session_present, :return_code]
@@ -13,9 +13,9 @@ defmodule Featherweight.Protocol.ConnAck do
 
 end
 
-defimpl Encode, for: Featherweight.Protocol.ConnAck do
+defimpl Encode, for: Featherweight.Message.ConnAck do
 
-  alias Featherweight.Protocol.ConnAck
+  alias Featherweight.Message.ConnAck
 
   def encode(%ConnAck{session_present: session_present, return_code: return_code}) do
     fixed_header = << 2::4, 0::4 >>

@@ -1,22 +1,22 @@
 defmodule Featherweight.Decode do
   @moduledoc false
 
- alias Featherweight.Protocol
+ alias Featherweight.Message
 
   def decode(<< <<1::4,0::4>>, _rest::binary>> = bytes) do 
-    Protocol.Connect.decode(bytes)
+    Message.Connect.decode(bytes)
   end
 
   def decode(<< <<2::4,0::4>>, _rest::binary>> = bytes) do
-    Protocol.ConnAck.decode(bytes)
+    Message.ConnAck.decode(bytes)
   end
 
   def decode(<< << 3::4,  _flags::4 >>, _rest::binary>> = bytes) do
-    Protocol.Publish.decode(bytes)
+    Message.Publish.decode(bytes)
   end
 
   def decode(<< <<4::4,  _flags::4 >>, _rest::binary>> = bytes) do
-    Protocol.PubAck.decode(bytes)
+    Message.PubAck.decode(bytes)
   end
 
   def decode(<< <<5::4,  _flags::4 >>, _rest::binary>>) do
@@ -36,7 +36,7 @@ defmodule Featherweight.Decode do
   end
 
   def decode(<< <<9::4, _flags::4 >>, _rest::binary>> = bytes) do
-    Protocol.SubAck.decode(bytes)
+    Message.SubAck.decode(bytes)
   end
 
   def decode(<< <<10::4, _flags::4 >>, _rest::binary>>) do
@@ -44,19 +44,19 @@ defmodule Featherweight.Decode do
   end
 
   def decode(<< <<11::4, _flags::4 >>, _rest::binary>> = bytes) do
-    Protocol.UnsubAck.decode(bytes)
+    Message.UnsubAck.decode(bytes)
   end
 
   def decode(<< << 12::4, _flags::4 >>, _rest::binary>> = bytes) do
-    Protocol.PingReq.decode(bytes)
+    Message.PingReq.decode(bytes)
   end
 
   def decode(<< <<13::4, _flags::4>>, _rest::binary>> = bytes) do
-    Protocol.PingResp.decode(bytes)
+    Message.PingResp.decode(bytes)
   end
 
   def decode(<< <<14::4, _flags::4>>, _rest::binary>> = bytes) do
-    Protocol.Disconnect.decode(bytes)
+    Message.Disconnect.decode(bytes)
   end
 
   def length_prefixed_strings(<<>>, elements) do

@@ -1,6 +1,6 @@
 alias Featherweight.Encode
 
-defmodule Featherweight.Protocol.Subscribe do
+defmodule Featherweight.Message.Subscribe do
   @moduledoc false
 
   @type t ::%__MODULE__{packet_identifier: String.t,
@@ -11,9 +11,9 @@ defmodule Featherweight.Protocol.Subscribe do
 
 end
 
-defimpl Encode, for: Featherweight.Protocol.Subscribe do
+defimpl Encode, for: Featherweight.Message.Subscribe do
 
-  alias Featherweight.Protocol.Subscribe
+  alias Featherweight.Message.Subscribe
 
   def encode(%Subscribe{packet_identifier: packet_identifier, topics: topics}) do
     fixed_header = << 8::4, 2::4 >>

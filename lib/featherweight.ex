@@ -6,17 +6,7 @@ defmodule Featherweight do
 
   alias Featherweight.Socket
   alias Featherweight.Decode
-  alias Featherweight.Protocol.Connect
-  alias Featherweight.Protocol.ConnAck
-  alias Featherweight.Protocol.PingResp
-  alias Featherweight.Protocol.Disconnect
-  alias Featherweight.Protocol.PingReq
-  alias Featherweight.Protocol.Publish
-  alias Featherweight.Protocol.PubAck
-  alias Featherweight.Protocol.Subscribe
-  alias Featherweight.Protocol.SubAck
-  alias Featherweight.Protocol.Unsubscribe
-  alias Featherweight.Protocol.UnsubAck
+  alias Featherweight.Message
   alias Featherweight.Encode
 
   @default_uri "mqtt://127.0.0.1"
@@ -82,7 +72,7 @@ defmodule Featherweight do
     IO.puts(inspect(args))
     case Socket.connect(args) do
       {:ok, socket} ->
-        conn =  Map.merge(%Connect{
+        conn =  Map.merge(%Message.Connect{
                     keep_alive: Map.get(args,:timeout),
                     client_identifier: Map.get(args,:client_identifier)
                   },args)
@@ -96,63 +86,63 @@ defmodule Featherweight do
   end
 
   def disconnect(client) do
-    :gen_fsm.send_event(client,%Disconnect{reason: :user_disconnect})
+    :gen_fsm.send_event(client,%Message.Disconnect{reason: :user_disconnect})
   end
 
   def subscribe(client,topics) do
     packet_identifier = :crypto.strong_rand_bytes(2)
-    :gen_fsm.send_event(client,%Subscribe{packet_identifier: packet_identifier, topics: topics})
+    :gen_fsm.send_event(client,%Message.Subscribe{packet_identifier: packet_identifier, topics: topics})
   end
 
   def unsubscribe(client,topics) do
     packet_identifier = :crypto.strong_rand_bytes(2)
-    :gen_fsm.send_event(client,%Unsubscribe{packet_identifier: packet_identifier, topics: topics})
+    :gen_fsm.send_event(client,%Message.Unsubscribe{packet_identifier: packet_identifier, topics: topics})
   end
 
   # gen_fsm callbacks
 
-  def connecting(%ConnAck{}, %{timeout: timeout} = state_data) do
+  def connecting(%Message.ConnAck{}, %{timeout: timeout} = state_data) do
     keep_alive = Kernel.round(timeout/3)
     :timer.send_interval(keep_alive,self(),:keep_alive)
     {:next_state, :connected, Map.merge(state_data, %{keep_alive: keep_alive, ping_count: 0})}
   end
 
-  def connected(%Disconnect{reason: _reason}, %{socket: socket} = state_data) do
-      Socket.send(socket,Encode.encode(%Disconnect{}))
+  def connected(%Message.Disconnect{reason: _reason}, %{socket: socket} = state_data) do
+      Socket.send(socket,Encode.encode(%Message.Disconnect{}))
       {:next_state, :disconnecting, state_data}
   end
 
-  def connected(%PingResp{}, state_data) do
+  def connected(%Message.PingResp{}, state_data) do
     {:next_state,  :connected, Map.merge(state_data,
       %{unanswered_ping_count: 0})}
   end
 
-  def connected(%Publish{qos: qos, packet_identifier: packet_identifier} = message, %{socket: socket} = state_data) do
+  def connected(%Message.Publish{qos: qos, packet_identifier: packet_identifier} = message, %{socket: socket} = state_data) do
    if qos == 1 do
-      Socket.send(socket,Encode.encode(%PubAck{packet_identifier: packet_identifier}))
+      Socket.send(socket,Encode.encode(%Message.PubAck{packet_identifier: packet_identifier}))
     end
     IO.puts(inspect(message))
     {:next_state, :connected, state_data}
   end
 
-  def connected(%Subscribe{} = message, %{socket: socket} = state_data) do
+  def connected(%Message.Subscribe{} = message, %{socket: socket} = state_data) do
      IO.puts("Subscribing")
      Socket.send(socket,Encode.encode(message))
       {:next_state, :connected, state_data}
   end
 
-  def connected(%Unsubscribe{} = message, %{socket: socket} = state_data) do
+  def connected(%Message.Unsubscribe{} = message, %{socket: socket} = state_data) do
      IO.puts("Unsubscribing")
      Socket.send(socket,Encode.encode(message))
       {:next_state, :connected, state_data}
   end
 
-  def connected(%SubAck{} = message, state_data) do
+  def connected(%Message.SubAck{} = message, state_data) do
       IO.puts(inspect(message))
       {:next_state, :connected, state_data}
   end
 
-  def connected(%UnsubAck{} = message, state_data) do
+  def connected(%Message.UnsubAck{} = message, state_data) do
       IO.puts(inspect(message))
       {:next_state, :connected, state_data}
   end
@@ -177,9 +167,9 @@ defmodule Featherweight do
   def handle_info(:keep_alive, :connected, %{socket: socket} = state_data) do
     unanswered_ping_count = Map.get(state_data,:unanswered_ping_count,0)
     if unanswered_ping_count > 4 do
-      {:stop, %Disconnect{reason: :ping_timeout}, state_data}
+      {:stop, %Message.Disconnect{reason: :ping_timeout}, state_data}
     else
-      Socket.send(socket,Encode.encode(%PingReq{}))
+      Socket.send(socket,Encode.encode(%Message.PingReq{}))
       {:next_state, :connected, Map.merge(state_data,
           %{unanswered_ping_count: unanswered_ping_count + 1})}
     end

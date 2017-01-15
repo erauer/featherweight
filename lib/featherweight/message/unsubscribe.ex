@@ -1,6 +1,6 @@
 alias Featherweight.Encode
 
-defmodule Featherweight.Protocol.Unsubscribe do
+defmodule Featherweight.Message.Unsubscribe do
   @moduledoc false
 
   @type t ::%__MODULE__{packet_identifier: String.t,
@@ -11,9 +11,9 @@ defmodule Featherweight.Protocol.Unsubscribe do
 
 end
 
-defimpl Encode, for: Featherweight.Protocol.Unsubscribe do
+defimpl Encode, for: Featherweight.Message.Unsubscribe do
 
-  alias Featherweight.Protocol.Unsubscribe
+  alias Featherweight.Message.Unsubscribe
 
   def encode(%Unsubscribe{packet_identifier: packet_identifier, topics: topics}) do
     fixed_header = << 10::4, 2::4 >>

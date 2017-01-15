@@ -1,4 +1,4 @@
-defmodule Featherweight.Protocol.Publish do
+defmodule Featherweight.Message.Publish do
   @moduledoc false
 
   require IEx

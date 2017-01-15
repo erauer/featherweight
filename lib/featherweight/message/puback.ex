@@ -1,6 +1,6 @@
 alias Featherweight.Encode
 
-defmodule Featherweight.Protocol.PubAck do
+defmodule Featherweight.Message.PubAck do
   @moduledoc false
 
   @enforce_keys [:packet_identifier]
@@ -13,9 +13,9 @@ defmodule Featherweight.Protocol.PubAck do
 
 end
 
-defimpl Encode, for: Featherweight.Protocol.PubAck do
+defimpl Encode, for: Featherweight.Message.PubAck do
 
-  alias Featherweight.Protocol.PubAck
+  alias Featherweight.Message.PubAck
 
   def encode(%PubAck{packet_identifier: packet_identifier}) do
     fixed_header = << 4::4, 0::4 >>

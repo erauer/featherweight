@@ -1,6 +1,6 @@
 alias Featherweight.Encode
 
-defmodule Featherweight.Protocol.Disconnect do
+defmodule Featherweight.Message.Disconnect do
   @moduledoc false
 
   @type reason :: :ping_timeout | :server_disconnect | :user_disconnect
@@ -13,9 +13,9 @@ defmodule Featherweight.Protocol.Disconnect do
 
 end
 
-defimpl Encode, for: Featherweight.Protocol.Disconnect do
+defimpl Encode, for: Featherweight.Message.Disconnect do
 
-  alias Featherweight.Protocol.Disconnect
+  alias Featherweight.Message.Disconnect
 
   def encode(%Disconnect{}) do
     << 14::4, 0::4, 0::8 >>

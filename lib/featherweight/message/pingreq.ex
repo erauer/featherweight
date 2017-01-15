@@ -1,6 +1,6 @@
 alias Featherweight.Encode
 
-defmodule Featherweight.Protocol.PingReq do
+defmodule Featherweight.Message.PingReq do
   @moduledoc false
 
   defstruct []
@@ -12,9 +12,9 @@ defmodule Featherweight.Protocol.PingReq do
 
 end
 
-defimpl Encode, for: Featherweight.Protocol.PingReq do
+defimpl Encode, for: Featherweight.Message.PingReq do
 
-  alias Featherweight.Protocol.PingReq
+  alias Featherweight.Message.PingReq
 
   def encode(%PingReq{}) do
     << 12::4, 0::4, 0::8 >>

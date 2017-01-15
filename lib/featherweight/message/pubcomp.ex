@@ -1,4 +1,4 @@
-defmodule Featherweight.Protocol.PubRel do
+defmodule Featherweight.Message.PubComp do
   @moduledoc false
 
   defstruct [:packet_identifier]

@@ -1,4 +1,4 @@
-defmodule Featherweight.Protocol.SubAck do
+defmodule Featherweight.Message.SubAck do
   @moduledoc false
 
   defstruct [:packet_identifier, :return_codes]
