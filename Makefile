@@ -9,8 +9,12 @@ all: test
 
 .PHONY: test
 test:
-		docker build -t "erauer/$(PRJTAG)" .
+	docker build -t "erauer/$(PRJTAG)" .
 		-docker rm "$(PRJTAG)-$(VERSION_TAG)" -f
 		docker run --name "$(PRJTAG)-$(VERSION_TAG)"  --expose 1883 -p 1883:1883 -t "erauer/$(PRJTAG)"  \
 			/bin/bash -c "source /usr/local/asdf/asdf.sh && \
-			python3 /usr/src/app/integration/interoperability/startbroker.py"
+			python3 /usr/src/app/integration/interoperability/startbroker.py" &
+	while ! echo exit | nc -z 127.0.0.1 1883; do sleep 10; done
+	mix test --include external:true
+	docker exec	 "$(PRJTAG)-$(VERSION_TAG)" /bin/bash -c 'pgrep -P 1 | xargs kill -s SIGINT'
+	wait
