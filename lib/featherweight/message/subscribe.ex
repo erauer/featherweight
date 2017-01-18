@@ -4,7 +4,7 @@ defmodule Featherweight.Message.Subscribe do
   @moduledoc false
 
   @type t ::%__MODULE__{packet_identifier: String.t,
-                        topics: list(tuple())
+                        topics: [{String.t,integer()}] 
   }
 
   defstruct [:packet_identifier, :topics]

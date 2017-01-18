@@ -1,4 +1,4 @@
-defmodule Featherweight do
+defmodule Featherweight.Client do
   @moduledoc """
 
   This module contains the main MQTT client implementation
@@ -31,6 +31,10 @@ defmodule Featherweight do
             timeout: @default_timeout]
 
 
+  @callback on_connect() :: any
+
+  @callback on_subscribe([{String.t,integer()}]) :: any
+
   @spec random_client_id() :: String.t
   defp random_client_id() do
     valid_chars = "abcdefghijklmnopqrstuvwxyz" <>
@@ -51,15 +55,15 @@ defmodule Featherweight do
   end
 
 
-  @spec start_link(options() | keyword()) :: GenServer.on_start
-  def start_link(options \\ []) do
+  @spec start_link(module, any, options) :: GenServer.on_start
+  def start_link(module, _args \\ [], options \\ []) do
 
    defaults = Keyword.merge(@default_args, [client_identifier: random_client_id()])
    options =  Keyword.merge(defaults, options, fn (_key,default_val,val) ->
         if val == nil do default_val else val end
       end)
 
-    args = Enum.into(options, %{socket: nil})
+    args = Enum.into(options, %{socket: nil, mod: module})
 
     #Parse URI
     %{uri: uri} = args
@@ -99,12 +103,20 @@ defmodule Featherweight do
     :gen_fsm.send_event(client,%Message.Unsubscribe{packet_identifier: packet_identifier, topics: topics})
   end
 
+  def wrap_cb(func,args,state,state_data) when is_function(func) do
+    wrap_cb(apply(func, args),state,state_data)
+  end
+
+  def wrap_cb({:ok},state,state_data) do
+    {:next_state,state,state_data}
+  end
+
   # gen_fsm callbacks
 
-  def connecting(%Message.ConnAck{}, %{timeout: timeout} = state_data) do
+  def connecting(%Message.ConnAck{}, %{timeout: timeout, mod: module} = state_data) do
     keep_alive = Kernel.round(timeout/3)
     :timer.send_interval(keep_alive,self(),:keep_alive)
-    {:next_state, :connected, Map.merge(state_data, %{keep_alive: keep_alive, ping_count: 0})}
+    wrap_cb(&module.on_connect/0,[],:connected,Map.merge(state_data, %{keep_alive: keep_alive, ping_count: 0}))
   end
 
   def connected(%Message.Disconnect{reason: _reason}, %{socket: socket} = state_data) do
@@ -137,9 +149,9 @@ defmodule Featherweight do
       {:next_state, :connected, state_data}
   end
 
-  def connected(%Message.SubAck{} = message, state_data) do
+  def connected(%Message.SubAck{return_codes: return_codes} = message, %{mod: module} = state_data) do
       IO.puts(inspect(message))
-      {:next_state, :connected, state_data}
+      wrap_cb(&module.on_subscribe/1,[return_codes],:connected,state_data)
   end
 
   def connected(%Message.UnsubAck{} = message, state_data) do
