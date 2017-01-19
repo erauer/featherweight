@@ -4,18 +4,21 @@ defmodule Featherweight.Message.Connect do
   @moduledoc false
 
   alias Featherweight.Decode
+  alias Featherweight.Message
 
   @type username :: String.t | nil
   @type password :: String.t | nil
   @type client_identifier :: String.t
   @type will_topic :: String.t | nil
   @type will_message :: String.t | nil
+  @type will_qos:: Message.qos() | nil
 
   @type t ::%__MODULE__{client_identifier: client_identifier,
                         username: username,
                         password: password,
                         will_topic: will_topic,
-                        will_message: will_message
+                        will_message: will_message,
+                        will_qos: will_qos
   }
   @enforce_keys [:client_identifier, :keep_alive]
   defstruct [:client_identifier,
@@ -43,7 +46,7 @@ defmodule Featherweight.Message.Connect do
 
     conn = case (will_flag) do
       1 ->
-        Map.merge(conn,%{will_qos: will_qos, will_retain: will_retain})
+        Map.merge(conn,%{will_qos: Message.decode_qos(will_qos), will_retain: will_retain})
       _ ->
         conn
     end
@@ -69,7 +72,7 @@ end
 
 defimpl Encode, for: Featherweight.Message.Connect do
 
-  import Featherweight.Encoder
+  import Featherweight.Message
   alias Featherweight.Message.Connect
 
   def encode(%Connect{username: username, password: password,
@@ -86,10 +89,10 @@ defimpl Encode, for: Featherweight.Message.Connect do
                       <<4::8>> <>
                       "MQTT" <>
                       <<4::8>>  <>
-                      <<flag_bit(username)::1,flag_bit(password)::1,
-                      flag_bit(will_retain)::1,qos(will_qos)::2,
-                      flag_bit(will_message)::1,
-                      flag_bit(clean_session)::1, 0::1  >>
+                      <<encode_flag(username)::1,encode_flag(password)::1,
+                      encode_flag(will_retain)::1,encode_qos(will_qos)::2,
+                      encode_flag(will_message)::1,
+                      encode_flag(clean_session)::1, 0::1  >>
     keepalive_header = <<keep_alive::16>>
     payload = length_prefixed_bytes(client_identifier) <>
               length_prefixed_bytes(will_topic) <>

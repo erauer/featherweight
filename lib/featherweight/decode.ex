@@ -3,7 +3,7 @@ defmodule Featherweight.Decode do
 
  alias Featherweight.Message
 
-  def decode(<< <<1::4,0::4>>, _rest::binary>> = bytes) do 
+  def decode(<< <<1::4,0::4>>, _rest::binary>> = bytes) do
     Message.Connect.decode(bytes)
   end
 

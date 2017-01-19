@@ -33,6 +33,10 @@ defmodule Featherweight.Client do
 
   @callback on_connect() :: any
 
+  @callback on_disconnect() :: any
+
+  @callback on_msg_received(String.t,binary()) :: any
+
   @callback on_subscribe([{String.t,integer()}]) :: any
 
   @spec random_client_id() :: String.t
@@ -93,6 +97,15 @@ defmodule Featherweight.Client do
     :gen_fsm.send_event(client,%Message.Disconnect{reason: :user_disconnect})
   end
 
+  def publish(client,topic,payload,qos,retain) do
+    :gen_fsm.send_event(client,{:send, %Message.Publish{
+        topic: topic,
+        qos: qos,
+        payload: payload,
+        retain: retain
+      }})
+  end
+
   def subscribe(client,topics) do
     packet_identifier = :crypto.strong_rand_bytes(2)
     :gen_fsm.send_event(client,%Message.Subscribe{packet_identifier: packet_identifier, topics: topics})
@@ -109,6 +122,10 @@ defmodule Featherweight.Client do
 
   def wrap_cb({:ok},state,state_data) do
     {:next_state,state,state_data}
+  end
+
+  def wrap_cb({:stop,reason},_state,_state_data) do
+    {:stop,reason}
   end
 
   # gen_fsm callbacks
@@ -129,13 +146,6 @@ defmodule Featherweight.Client do
       %{unanswered_ping_count: 0})}
   end
 
-  def connected(%Message.Publish{qos: qos, packet_identifier: packet_identifier} = message, %{socket: socket} = state_data) do
-   if qos == 1 do
-      Socket.send(socket,Encode.encode(%Message.PubAck{packet_identifier: packet_identifier}))
-    end
-    IO.puts(inspect(message))
-    {:next_state, :connected, state_data}
-  end
 
   def connected(%Message.Subscribe{} = message, %{socket: socket} = state_data) do
      IO.puts("Subscribing")
@@ -159,9 +169,26 @@ defmodule Featherweight.Client do
       {:next_state, :connected, state_data}
   end
 
-  def handle_info({:tcp_closed, _socket}, _state, state_data) do
+  # Incoming Publish
+  def connected(%Message.Publish{qos: qos, packet_identifier: packet_identifier} = message,
+               %{socket: socket, mod: module} = state_data) do
+   if qos == 1 do
+      Socket.send(socket,Encode.encode(%Message.PubAck{packet_identifier: packet_identifier}))
+    end
+    %{topic: topic, payload: payload} = message
+    wrap_cb(&module.on_msg_received/2,[topic,payload],:connected,state_data)
+    {:next_state, :connected, state_data}
+  end
+
+  # Outgoing Publish
+  def connected({:send, %Message.Publish{} = message}, %{socket: socket} = state_data) do
+     Socket.send(socket,Encode.encode(message))
+     {:next_state, :connected, state_data}
+  end
+
+  def handle_info({:tcp_closed, _socket}, state, %{mod: module} = state_data) do
     IO.puts("TCP Closed")
-    {:stop, :server_disconnect, Map.merge(state_data,%{socket: nil})}
+    wrap_cb(&module.on_disconnect/0,[],state,state_data)
   end
 
   def handle_info({:tcp, _socket, data}, state_name, state_data) do
@@ -179,7 +206,8 @@ defmodule Featherweight.Client do
   def handle_info(:keep_alive, :connected, %{socket: socket} = state_data) do
     unanswered_ping_count = Map.get(state_data,:unanswered_ping_count,0)
     if unanswered_ping_count > 4 do
-      {:stop, %Message.Disconnect{reason: :ping_timeout}, state_data}
+      Socket.close(socket)
+      #wrap_cb(&module.on_disconnect,[],state,state_data)
     else
       Socket.send(socket,Encode.encode(%Message.PingReq{}))
       {:next_state, :connected, Map.merge(state_data,

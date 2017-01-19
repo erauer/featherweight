@@ -4,6 +4,8 @@ defmodule Featherweight.Message.ConnectTest do
 
   use ExUnit.Case
 
+  require IEx
+
   alias Featherweight.Message.Connect
   alias Featherweight.Encode
   alias Featherweight.Decode
@@ -12,7 +14,7 @@ defmodule Featherweight.Message.ConnectTest do
     conn = %Connect{
       username: "username",
       password: "password",
-      will_qos: 0,
+      will_qos: :qos0,
       will_topic: "will_topic",
       will_message: "will_message",
       will_retain: false,
@@ -23,6 +25,7 @@ defmodule Featherweight.Message.ConnectTest do
 
     encoded =  Encode.encode(conn)
     decoded =  Decode.decode(encoded)
+
 
     ^decoded = conn
   end

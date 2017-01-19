@@ -9,9 +9,11 @@ defmodule Featherweight do
       Client.start_link(module,args,options)
     end
 
-    defdelegate subscribe(client,topics), to: Client
+    defdelegate disconnect(client), to: Client
 
-    #defdelegate publish(client,topic,payload,qos \\ 0,retain \\ 0), to: Client
+    defdelegate publish(client,topic,payload,qos \\ :qos0, retain \\ false), to: Client
+
+    defdelegate subscribe(client,topics), to: Client
 
     defmacro __using__(_) do
       quote location: :keep do
@@ -22,12 +24,22 @@ defmodule Featherweight do
           {:ok}
         end
 
+        def on_disconnect() do
+          {:stop, :normal}
+        end
+
+        def on_msg_received(topic,payload) do
+          {:ok}
+        end
+
         def on_subscribe(return_codes) do
           {:ok}
         end
 
         defoverridable [
           on_connect: 0,
+          on_disconnect: 0,
+          on_msg_received: 2,
           on_subscribe: 1
         ]
       end
