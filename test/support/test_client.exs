@@ -8,30 +8,35 @@ defmodule Featherweight.TestClient do
     Featherweight.start_link(__MODULE__,args,options)
   end
 
-  def on_connect() do
+  def init() do
+    {:ok, %{num_msgs_received: 0}}
+  end
+
+  def on_connect(state) do
     IO.puts("Connected")
     send :test, :connected
-    {:ok}
+    {:ok,state}
   end
 
-  def on_disconnect() do
+  def on_disconnect(state) do
     IO.puts("Disconnected")
     send :test, :disconnected
-    {:ok}
+    {:stop, :normal, state}
   end
 
-  def on_msg_received(topic,payload) do
+  def on_msg_received(topic,payload,
+                      %{num_msgs_received: num_msgs_received} = state) do
     IO.puts("Received Message")
     IO.puts(inspect(payload))
     send :test, {:received, {topic,payload}}
-    {:ok}
+    {:ok,%{state | num_msgs_received: num_msgs_received + 1}}
   end
 
-  def on_subscribe(return_codes) do
+  def on_subscribe(return_codes,state) do
     IO.puts("Subscribed")
     IO.puts(inspect(return_codes))
     send :test, {:subscribed,return_codes}
-    {:ok}
+    {:ok,state}
   end
 
 end

@@ -3,8 +3,10 @@ alias Featherweight.Encode
 defmodule Featherweight.Message.Subscribe do
   @moduledoc false
 
+  alias Featherweight.Message
+
   @type t ::%__MODULE__{packet_identifier: String.t,
-                        topics: [{String.t,integer()}] 
+                        topics: [{String.t,Message.qos()}]
   }
 
   defstruct [:packet_identifier, :topics]
@@ -13,6 +15,7 @@ end
 
 defimpl Encode, for: Featherweight.Message.Subscribe do
 
+  alias Featherweight.Message
   alias Featherweight.Message.Subscribe
 
   def encode(%Subscribe{packet_identifier: packet_identifier, topics: topics}) do
@@ -22,7 +25,8 @@ defimpl Encode, for: Featherweight.Message.Subscribe do
   end
 
   defp encode_topics(payload,[{topic,qos} | tail]) do
-    payload = payload <> <<byte_size(topic)::16>> <> topic <> <<0::6,qos::2>>
+    payload = payload <> <<byte_size(topic)::16>> <>
+              topic <> <<0::6,Message.encode_qos(qos)::2>>
     encode_topics(payload,tail)
   end
 

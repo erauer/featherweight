@@ -25,28 +25,33 @@ defmodule Featherweight do
       quote location: :keep do
         @behaviour Featherweight.Client
 
-        @doc false
-        def on_connect() do
-          {:ok}
+        def init() do
+          {:ok,%{}}
         end
 
-        def on_disconnect() do
+        @doc false
+        def on_connect(state) do
+          {:ok,state}
+        end
+
+        def on_disconnect(state) do
           {:stop, :normal}
         end
 
-        def on_msg_received(topic,payload) do
-          {:ok}
+        def on_msg_received(topic,payload,state) do
+          {:ok,state}
         end
 
-        def on_subscribe(return_codes) do
-          {:ok}
+        def on_subscribe(return_codes,state) do
+          {:ok,state}
         end
 
         defoverridable [
-          on_connect: 0,
-          on_disconnect: 0,
-          on_msg_received: 2,
-          on_subscribe: 1
+          init: 0,  
+          on_connect: 1,
+          on_disconnect: 1,
+          on_msg_received: 3,
+          on_subscribe: 2
         ]
       end
     end
