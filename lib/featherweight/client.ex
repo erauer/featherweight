@@ -99,22 +99,12 @@ defmodule Featherweight.Client do
     end)
 
     #Parse URI
-    opts = Enum.into(args,%{})
-    %{uri: uri} = opts
-    opts = Map.merge(opts,parse(uri))
-    IO.puts(inspect(opts))
-    case Socket.connect(opts) do
-      {:ok, socket} ->
-        conn =  Map.merge(%Message.Connect{
-                  keep_alive: Map.get(opts,:timeout),
-                  client_identifier: Map.get(opts,:client_identifier)
-                },opts)
-                Socket.send(socket,Encode.encode(conn))
-                {:ok, :connecting, %{opts | socket: socket}}
-      {:error, reason} ->
-        IO.puts "TCP connection error: #{inspect reason}"
-        {:error, reason} # try again in one second
-    end
+    state_data = Enum.into(args,%{})
+    %{uri: uri} = state_data
+    state_data = Map.merge(state_data,parse(uri))
+    IO.puts(inspect(state_data))
+    :gen_fsm.send_event_after(0,:connect)
+    {:ok, :connecting, state_data}
   end
 
   def disconnect(client) do
@@ -153,6 +143,21 @@ defmodule Featherweight.Client do
   end
 
   # gen_fsm callbacks
+
+  def connecting(:connect, state_data ) do
+    case Socket.connect(state_data) do
+      {:ok, socket} ->
+        conn =  Map.merge(%Message.Connect{
+                  keep_alive: Map.get(state_data,:timeout),
+                  client_identifier: Map.get(state_data,:client_identifier)
+                },state_data)
+                Socket.send(socket,Encode.encode(conn))
+                {:next_state, :connecting, %{state_data | socket: socket}}
+      {:error, reason} ->
+        IO.puts "TCP connection error: #{inspect reason}"
+        {:error, reason} # try again in one second
+    end
+  end
 
   def connecting(%Message.ConnAck{}, %{timeout: timeout, mod: module} = state_data) do
     keep_alive = Kernel.round(timeout/3)
