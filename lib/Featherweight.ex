@@ -4,7 +4,13 @@ defmodule Featherweight do
 
     alias Featherweight.Client
 
-    @spec start_link(module, any, Client.options) :: GenServer.on_start
+
+    @spec start(module, Client.options, GenServer.options) :: GenServer.on_start
+    def start(module, args, options \\ []) do
+      Client.start(module,args,options)
+    end
+
+    @spec start_link(module, Client.options, GenServer.options) :: GenServer.on_start
     def start_link(module, args, options \\ []) do
       Client.start_link(module,args,options)
     end

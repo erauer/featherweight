@@ -4,7 +4,7 @@ defmodule Featherweight.TestClient do
 
   use Featherweight
 
-  def start_link(args, options \\ []) do
+  def start_link(args \\ [], options \\ []) do
     Featherweight.start_link(__MODULE__,args,options)
   end
 

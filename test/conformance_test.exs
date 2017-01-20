@@ -10,7 +10,7 @@ defmodule Featherweight.ConformanceTest do
   test "Client should publish and subscribe" do
     Process.register self, :test
 
-    {:ok, pid} = TestClient.start_link(self)
+    {:ok, pid} = TestClient.start_link()
     assert_receive :connected
 
     Featherweight.subscribe(pid,[{"/foo",0}])

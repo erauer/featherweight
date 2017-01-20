@@ -4,6 +4,8 @@ defmodule Featherweight.Client do
   This module contains the main MQTT client implementation
   """
 
+  require IEx
+
   alias Featherweight.Socket
   alias Featherweight.Decode
   alias Featherweight.Message
@@ -26,9 +28,14 @@ defmodule Featherweight.Client do
     name: String.t
   ]
 
-  @default_args [uri: @default_uri,
-            username: @default_username, password: @default_password,
-            timeout: @default_timeout]
+  @default_state [
+            uri: @default_uri,
+            username: @default_username,
+            password: @default_password,
+            timeout: @default_timeout,
+            socket: nil,
+            mod: nil
+  ]
 
 
   @callback on_connect() :: any
@@ -59,34 +66,51 @@ defmodule Featherweight.Client do
   end
 
 
-  @spec start_link(module, any, options) :: GenServer.on_start
-  def start_link(module, _args \\ [], options \\ []) do
+  @spec start(module, GenServer.args(), GenServer.options()) :: GenServer.on_start
+  def start(module,args \\ [], options \\ []) do
+    args = Keyword.merge(args,[mod: module])
+    case gen_fsm_opts(options) do
+      nil -> :gen_fsm.start_link(__MODULE__, args, options)
+      other -> :gen_fsm.start_link(other,__MODULE__, args, options)
+    end
+  end
 
-   defaults = Keyword.merge(@default_args, [client_identifier: random_client_id()])
-   options =  Keyword.merge(defaults, options, fn (_key,default_val,val) ->
-        if val == nil do default_val else val end
-      end)
+  @spec start_link(module, GenServer.args(), GenServer.options()) :: GenServer.on_start
+  def start_link(module, args \\ [], options \\ []) do
+    args = Keyword.merge(args,[mod: module])
+    case gen_fsm_opts(options) do
+      nil -> :gen_fsm.start_link(__MODULE__, args, options)
+      other -> :gen_fsm.start_link(other,__MODULE__, args, options)
+    end
+  end
 
-    args = Enum.into(options, %{socket: nil, mod: module})
-
-    #Parse URI
-    %{uri: uri} = args
-    args = Map.merge(args,parse(uri))
-
-    :gen_fsm.start_link(__MODULE__, args, [])
+  defp gen_fsm_opts(opts) when is_list(opts) do
+    case Keyword.pop(opts,:name) do
+      {nil,_} -> nil
+      {name,_} when is_atom(name) -> {:local,name}
+      {val,_} when is_tuple(val) -> val
+    end
   end
 
   def init(args) do
-    IO.puts(inspect(args))
-    case Socket.connect(args) do
+    defaults = Keyword.merge(@default_state, [client_identifier: random_client_id()])
+    args =  Keyword.merge(defaults, args, fn (_key,default_val,val) ->
+         if val == nil do default_val else val end
+    end)
+
+    #Parse URI
+    opts = Enum.into(args,%{})
+    %{uri: uri} = opts
+    opts = Map.merge(opts,parse(uri))
+    IO.puts(inspect(opts))
+    case Socket.connect(opts) do
       {:ok, socket} ->
         conn =  Map.merge(%Message.Connect{
-                    keep_alive: Map.get(args,:timeout),
-                    client_identifier: Map.get(args,:client_identifier)
-                  },args)
-        Socket.send(socket,Encode.encode(conn))
-
-        {:ok, :connecting, %{args | socket: socket}}
+                  keep_alive: Map.get(opts,:timeout),
+                  client_identifier: Map.get(opts,:client_identifier)
+                },opts)
+                Socket.send(socket,Encode.encode(conn))
+                {:ok, :connecting, %{opts | socket: socket}}
       {:error, reason} ->
         IO.puts "TCP connection error: #{inspect reason}"
         {:error, reason} # try again in one second
